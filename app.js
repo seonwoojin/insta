@@ -1,4 +1,5 @@
 const { Builder, Browser, By, Key, until } = require("selenium-webdriver");
+require("dotenv").config();
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -6,7 +7,7 @@ function sleep(ms) {
 
 const myName = "todailyn";
 
-const keyword = ["#여자데일리룩", "#좋아요반사", "#좋아요테러", "#좋반"];
+const keyword = ["#옷스타그램", "#좋아요반사", "#좋아요테러", "#좋반"];
 
 async function nextPage(driver) {
   try {
@@ -107,11 +108,24 @@ async function Like(driver) {
       )
     );
     if (parents.length > 0) {
-      const parent = await driver.findElement(
+      const check = await driver.findElement(
         By.xpath(
-          "/html/body/div[2]/div/div/div/div[2]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div[2]/div/div"
+          "/html/body/div[2]/div/div/div/div[2]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div"
         )
       );
+      const checks = await check.findElements(By.xpath("*"));
+      const parent =
+        checks.length > 2
+          ? await driver.findElement(
+              By.xpath(
+                "/html/body/div[2]/div/div/div/div[2]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div[3]/div/div"
+              )
+            )
+          : await driver.findElement(
+              By.xpath(
+                "/html/body/div[2]/div/div/div/div[2]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div[2]/div/div"
+              )
+            );
       const childrens = await parent.findElements(By.xpath("*"));
       const anchors = [];
       if (childrens.length > 1) {
@@ -131,6 +145,7 @@ async function Like(driver) {
             const person = await childrens[i].findElement(
               By.xpath("./div[2]/div[1]/div/div/span/a")
             );
+            console.log(person);
             const personName = await person
               .findElement(By.xpath("./span/div"))
               .getAttribute("innerText");
@@ -283,12 +298,18 @@ async function instaBot() {
     await sleep(3000 + Math.random() * 5000);
     while (true) {
       const date = new Date();
-      if (date.getHours() >= 15 && date.getHours() <= 23) {
+      if (date.getHours() === 2) {
+        return;
+      } else {
         await driver.get("https://www.instagram.com/");
         await search(driver);
-      } else {
-        return;
       }
+      // if (date.getHours() >= 15 && date.getHours() <= 23) {
+      //   await driver.get("https://www.instagram.com/");
+      //   await search(driver);
+      // } else {
+      //   return;
+      // }
     }
   } finally {
     await driver.quit();
@@ -362,6 +383,65 @@ async function search(driver) {
   }
 }
 
-async function test() {}
+async function test() {
+  let driver = await new Builder().forBrowser(Browser.CHROME).build();
+  await driver.get("https://www.instagram.com/p/Cm_2p9AhGuS/");
+  await sleep(20000);
+  const check = await driver.findElement(
+    By.xpath(
+      "/html/body/div[2]/div/div/div/div[2]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div"
+    )
+  );
+  const checks = await check.findElements(By.xpath("*"));
+  const parent =
+    checks.length > 2
+      ? await driver.findElement(
+          By.xpath(
+            "/html/body/div[2]/div/div/div/div[2]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div[3]/div/div"
+          )
+        )
+      : await driver.findElement(
+          By.xpath(
+            "/html/body/div[2]/div/div/div/div[2]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div[2]/div/div"
+          )
+        );
+  const childrens = await parent.findElements(By.xpath("*"));
+  console.log(childrens);
+  const anchors = [];
+  if (childrens.length > 1) {
+    if (childrens.length < 4) {
+      for (let i = 0; i < childrens.length; i++) {
+        const person = await childrens[i].findElement(
+          By.xpath("./div[2]/div[1]/div/div/span/a")
+        );
+        console.log(person);
+        const personName = await person
+          .findElement(By.xpath("./span/div"))
+          .getAttribute("innerText");
+        if (personName !== myName)
+          anchors.push(await person.getAttribute("href"));
+      }
+    } else {
+      for (let i = 0; i < 4; i++) {
+        const person = await childrens[i].findElement(
+          By.xpath("./div[2]/div[1]/div/div/span/a")
+        );
+        console.log(person);
+        const personName = await person
+          .findElement(By.xpath("./span/div"))
+          .getAttribute("innerText");
+        if (personName !== myName)
+          anchors.push(await person.getAttribute("href"));
+      }
+    }
+    await sleep(8000);
+    for (let i = 0; i < anchors.length; i++) {
+      await driver.get(anchors[i]);
+      await profileFeed(driver);
+      await sleep(8000);
+    }
+  }
+}
 
 instaBot();
+//test();
